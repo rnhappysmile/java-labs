@@ -1,3 +1,40 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: java-labs
+  
+  profiles:
+    include: local
+  
+  security:
+    user:
+      name: ${ADMIN_NAME}
+      password: ${ADMIN_PASSWORD}
+
+  boot:
+    admin:
+      client:
+        url: http://localhost:8080
+        username: ${ADMIN_NAME} 
+        password: ${ADMIN_PASSWORD}
+      notify:
+        slack:
+          enabled: true
+          webhook-url: ${SLACK_WEBHOOK_URL}
+          channel: "#monitoring"
+          username: "Java-Labs-Bot"
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
