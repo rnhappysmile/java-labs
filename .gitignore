@@ -5,6 +5,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 java-labs.zip
+application-local.yaml
 
 ### STS ###
 .apt_generated
