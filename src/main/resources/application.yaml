@@ -19,6 +19,13 @@ spring:
         url: http://localhost:8080
         username: ${ADMIN_NAME} 
         password: ${ADMIN_PASSWORD}
+      notify:
+        slack:
+          enabled: true
+          webhook-url: ${SLACK_WEBHOOK_URL}
+          channel: "#monitoring"
+          username: "Java-Labs-Bot"
+
 
 management:
   endpoints:
