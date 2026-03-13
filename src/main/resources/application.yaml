@@ -1,18 +1,22 @@
 server:
   port: 8080
 
+logging:
+  level:
+    org.springframework.security: ${LOGGING_LEVEL}
+    org.springframework.security.oauth2: ${LOGGING_LEVEL}
+
 spring:
   application:
     name: java-labs
-  
   profiles:
-    include: local
-  
+    include: 
+      - local
+      - oauth
   security:
     user:
       name: ${ADMIN_NAME}
       password: ${ADMIN_PASSWORD}
-
   boot:
     admin:
       client:
@@ -25,7 +29,21 @@ spring:
           webhook-url: ${SLACK_WEBHOOK_URL}
           channel: "#monitoring"
           username: "Java-Labs-Bot"
-
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  datasource:
+    # 1. DB 연결 유지 옵션 추가 (중요!)
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    # 2. 패스워드는 보통 비워두는 것이 기본값입니다.
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: create   # 서버 시작 시 테이블 자동 생성
+    show-sql: true       # 콘솔에 SQL 로그 출력
 
 management:
   endpoints:

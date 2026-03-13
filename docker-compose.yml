@@ -1,13 +1,19 @@
+version: '3.8'
 services:
   java-labs:
     build: .
+    container_name: java-labs-app
     ports:
       - "8080:8080"
     networks:
       - monitoring-network
+    # 애플리케이션 프로파일을 컨테이너 실행 시 주입
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
 
   prometheus:
     image: prom/prometheus
+    container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -17,6 +23,7 @@ services:
 
   grafana:
     image: grafana/grafana
+    container_name: grafana
     ports:
       - "3000:3000"
     networks:

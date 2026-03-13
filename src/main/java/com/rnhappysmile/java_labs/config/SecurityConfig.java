@@ -9,9 +9,16 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import com.rnhappysmile.java_labs.auth.service.CustomOAuth2UserService;
+
+import lombok.RequiredArgsConstructor;
+
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final CustomOAuth2UserService CustomOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -21,6 +28,8 @@ public class SecurityConfig {
             .requestMatchers(new AntPathRequestMatcher("/login")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/instances")).permitAll()
+            .requestMatchers("/", "/login", "/oauth2/**", "/error").permitAll()
+            .requestMatchers("/h2-console/**").permitAll()
             .anyRequest().authenticated()
         );
 
@@ -30,6 +39,13 @@ public class SecurityConfig {
             .defaultSuccessUrl("/", true)
             .permitAll()
         );
+
+        http.oauth2Login(oauth2 -> oauth2
+            .userInfoEndpoint(userInfo -> userInfo
+                .userService(CustomOAuth2UserService)
+            )
+            .defaultSuccessUrl("/")
+        );
         
         http.logout(logout -> logout
             .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
@@ -38,7 +54,9 @@ public class SecurityConfig {
 
         // 3. 인증 및 보안 예외 설정 (핵심!)
         http.httpBasic(httpBasic -> {}); // 클라이언트 등록용 인증 허용
-        http.csrf(csrf -> csrf.disable()); // 클라이언트 POST 등록 허용
+        http.csrf(csrf -> csrf.disable())
+            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())
+        ); // 클라이언트 POST 등록 허용
 
         return http.build();
     }
