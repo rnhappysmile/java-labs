@@ -30,6 +30,7 @@ public class SecurityConfig {
             .requestMatchers(new AntPathRequestMatcher("/instances")).permitAll()
             .requestMatchers("/", "/login", "/oauth2/**", "/error").permitAll()
             .requestMatchers("/h2-console/**").permitAll()
+            .requestMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
         );
 
@@ -49,7 +50,10 @@ public class SecurityConfig {
         
         http.logout(logout -> logout
             .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+            .logoutUrl("/logout")
             .logoutSuccessUrl("/login")
+            .invalidateHttpSession(true)
+            .deleteCookies("JSESSIONID")
         );
 
         // 3. 인증 및 보안 예외 설정 (핵심!)
