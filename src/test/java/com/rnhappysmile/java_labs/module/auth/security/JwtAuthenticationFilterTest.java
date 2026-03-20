@@ -109,20 +109,24 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("실패: Bearer 접두사가 없는 잘못된 헤더 형식은 무시함")
-    void non_bearer_token_ignored() throws ServletException, IOException {
-        // [Given] Basic 방식 등 다른 인증 헤더가 들어온 경우
-        String token = "some-token";
+    @DisplayName("성공: 유효한 토큰이 쿠키에 있으면 SecurityContext에 인증 정보가 저장되어야 함")
+    void valid_token_in_cookie_sets_authentication() throws ServletException, IOException {
+        // [Given] Authorization 헤더 대신 쿠키에 토큰이 있는 경우
+        String token = "valid-cookie-token";
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("Authorization", "Basic " + token);
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("accessToken", token);
+        request.setCookies(cookie);
         MockHttpServletResponse response = new MockHttpServletResponse();
         
+        Authentication authentication = mock(Authentication.class);
+        when(jwtProvider.validateToken(token)).thenReturn(true);
+        when(jwtProvider.getAuthentication(token)).thenReturn(authentication);
+
         // [When] 필터 실행
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         // [Then]
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isEqualTo(authentication);
         verify(filterChain).doFilter(request, response);
-        verify(jwtProvider, never()).validateToken(anyString());
     }
 }

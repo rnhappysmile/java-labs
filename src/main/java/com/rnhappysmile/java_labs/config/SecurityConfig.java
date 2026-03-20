@@ -1,6 +1,7 @@
 package com.rnhappysmile.java_labs.config;
 
 import com.rnhappysmile.java_labs.module.auth.security.JwtAuthenticationFilter;
+import com.rnhappysmile.java_labs.module.auth.security.OAuth2SuccessHandler;
 import com.rnhappysmile.java_labs.module.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuth2SuccessHandler oauth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,7 +44,7 @@ public class SecurityConfig {
             .requestMatchers(new AntPathRequestMatcher("/login")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/instances")).permitAll()
-            .requestMatchers("/", "/login", "/oauth2/**", "/error", "/h2-console/**").permitAll()
+            .requestMatchers("/", "/login", "/oauth2/**", "/error", "/h2-console/**", "/api/auth/refresh").permitAll()
             .requestMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
         );
@@ -52,7 +54,7 @@ public class SecurityConfig {
             .userInfoEndpoint(userInfo -> userInfo
                 .userService(customOAuth2UserService)
             )
-            .defaultSuccessUrl("/")
+            .successHandler(oauth2SuccessHandler)
         );
 
         // 6. 예외 처리

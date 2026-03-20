@@ -10,5 +10,7 @@ import com.rnhappysmile.java_labs.module.auth.domain.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByProviderAndProviderId(String provider, String providerId);
+    Optional<User> findByEmail(String email);
+    Optional<User> findByRefreshToken(String refreshToken);
 }
 
