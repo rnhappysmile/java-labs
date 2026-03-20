@@ -1,8 +1,8 @@
-package com.rnhappysmile.java_labs.auth.dto;
+package com.rnhappysmile.java_labs.module.auth.dto;
 
 import java.util.Map;
 
-import com.rnhappysmile.java_labs.auth.OAuth2UserInfo;
+import com.rnhappysmile.java_labs.module.auth.OAuth2UserInfo;
 
 public class NaverUserInfo implements OAuth2UserInfo {
     private Map<String, Object> attributes;

@@ -45,6 +45,14 @@ spring:
       ddl-auto: create   # 서버 시작 시 테이블 자동 생성
     show-sql: true       # 콘솔에 SQL 로그 출력
 
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  issuer: "java-labs"
+  access-token:
+    expiration-time: 3600000
+  refresh-token:
+    expiration-time: 1209600000
+
 management:
   endpoints:
     web:

@@ -9,9 +9,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 
-import com.rnhappysmile.java_labs.auth.GoogleUserInfo;
-import com.rnhappysmile.java_labs.auth.OAuth2UserInfo;
-import com.rnhappysmile.java_labs.auth.OAuth2UserInfoFactory;
+import com.rnhappysmile.java_labs.module.auth.GoogleUserInfo;
+import com.rnhappysmile.java_labs.module.auth.OAuth2UserInfo;
+import com.rnhappysmile.java_labs.module.auth.OAuth2UserInfoFactory;
 
 class OAuth2UserInfoFactoryTest {
 

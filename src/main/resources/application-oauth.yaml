@@ -7,6 +7,7 @@ spring:
             client-id: ${google.client.id}
             client-secret: ${google.client.secret}
             scope:
+              - openid
               - email
               - profile
           naver:

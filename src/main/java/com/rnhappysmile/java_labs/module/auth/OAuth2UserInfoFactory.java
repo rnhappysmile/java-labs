@@ -1,10 +1,10 @@
-package com.rnhappysmile.java_labs.auth;
+package com.rnhappysmile.java_labs.module.auth;
 
 import java.util.Map;
 
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 
-import com.rnhappysmile.java_labs.auth.dto.NaverUserInfo;
+import com.rnhappysmile.java_labs.module.auth.dto.NaverUserInfo;
 
 public class OAuth2UserInfoFactory {
     public static OAuth2UserInfo getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {

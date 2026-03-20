@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 java-labs.zip
 application-local.yaml
+LEARNING_GUIDE.md
 
 ### STS ###
 .apt_generated

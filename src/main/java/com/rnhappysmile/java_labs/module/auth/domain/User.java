@@ -1,4 +1,4 @@
-package com.rnhappysmile.java_labs.auth.domain;
+package com.rnhappysmile.java_labs.module.auth.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

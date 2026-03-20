@@ -1,19 +1,17 @@
-package com.rnhappysmile.java_labs.auth.service;
+package com.rnhappysmile.java_labs.module.auth.service;
 
+import com.rnhappysmile.java_labs.module.auth.OAuth2UserInfo;
+import com.rnhappysmile.java_labs.module.auth.OAuth2UserInfoFactory;
+import com.rnhappysmile.java_labs.module.auth.domain.Role;
+import com.rnhappysmile.java_labs.module.auth.domain.User;
+import com.rnhappysmile.java_labs.module.auth.dto.PrincipalDetails;
+import com.rnhappysmile.java_labs.module.auth.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-
-import com.rnhappysmile.java_labs.auth.OAuth2UserInfo;
-import com.rnhappysmile.java_labs.auth.OAuth2UserInfoFactory;
-import com.rnhappysmile.java_labs.auth.domain.Role;
-import com.rnhappysmile.java_labs.auth.domain.User;
-import com.rnhappysmile.java_labs.auth.dto.PrincipalDetails;
-import com.rnhappysmile.java_labs.auth.repository.UserRepository;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

@@ -4,3 +4,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+jwt:
+  secret-key: c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5
+  access-token:
+    expiration-time: 3600000
+  refresh-token:
+    expiration-time: 1209600000
+  issuer: "test-issuer"

@@ -1,4 +1,4 @@
-package com.rnhappysmile.java_labs.auth;
+package com.rnhappysmile.java_labs.module.auth;
 
 import java.util.Map;
 

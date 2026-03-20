@@ -1,4 +1,4 @@
-package com.rnhappysmile.java_labs.auth.dto;
+package com.rnhappysmile.java_labs.module.auth.dto;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,7 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import com.rnhappysmile.java_labs.auth.domain.User;
+import com.rnhappysmile.java_labs.module.auth.domain.User;
 
 import lombok.Getter;
 
