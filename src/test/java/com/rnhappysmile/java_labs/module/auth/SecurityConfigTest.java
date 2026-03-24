@@ -1,4 +1,4 @@
-package com.rnhappysmile.java_labs.modules.auth;
+package com.rnhappysmile.java_labs.module.auth;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,12 +9,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.rnhappysmile.java_labs.config.SecurityConfig;
 import com.rnhappysmile.java_labs.module.auth.controller.AdminController;
 import com.rnhappysmile.java_labs.module.auth.service.CustomOAuth2UserService;
-import com.rnhappysmile.java_labs.module.auth.security.JwtAuthenticationFilter;
-import com.rnhappysmile.java_labs.config.SecurityConfig;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,20 +27,6 @@ class SecurityConfigTest {
 
     @MockBean
     private CustomOAuth2UserService customOAuth2UserService;
-
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @org.junit.jupiter.api.BeforeEach
-    void setUp() throws Exception {
-        org.mockito.Mockito.doAnswer(invocation -> {
-            jakarta.servlet.http.HttpServletRequest request = invocation.getArgument(0);
-            jakarta.servlet.http.HttpServletResponse response = invocation.getArgument(1);
-            jakarta.servlet.FilterChain filterChain = invocation.getArgument(2);
-            filterChain.doFilter(request, response);
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
-    }
 
     @Test
     @DisplayName("인증되지 않은 사용자가 관리자 페이지 접근 시 302(리다이렉트) 혹은 401이 발생해야 한다")

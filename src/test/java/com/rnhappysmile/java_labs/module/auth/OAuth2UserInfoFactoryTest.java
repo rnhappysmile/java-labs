@@ -1,4 +1,4 @@
-package com.rnhappysmile.java_labs.modules.auth;
+package com.rnhappysmile.java_labs.module.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

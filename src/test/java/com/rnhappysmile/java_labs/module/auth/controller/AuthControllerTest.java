@@ -1,102 +1,89 @@
 package com.rnhappysmile.java_labs.module.auth.controller;
 
-import com.rnhappysmile.java_labs.module.auth.domain.Role;
-import com.rnhappysmile.java_labs.module.auth.domain.User;
-import com.rnhappysmile.java_labs.module.auth.repository.UserRepository;
-import com.rnhappysmile.java_labs.module.auth.security.JwtProvider;
+import com.rnhappysmile.java_labs.module.auth.dto.TokenDto;
+import com.rnhappysmile.java_labs.module.auth.security.JwtAuthenticationFilter;
+import com.rnhappysmile.java_labs.module.auth.security.OAuth2SuccessHandler;
+import com.rnhappysmile.java_labs.module.auth.service.AuthService;
+import com.rnhappysmile.java_labs.module.auth.service.CustomOAuth2UserService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private JwtProvider jwtProvider;
+    private AuthService authService;
+
+    // SecurityConfig에서 사용하는 빈들을 Mock으로 선언하여 의존성 주입 오류를 방지합니다.
+    @MockBean
+    private CustomOAuth2UserService customOAuth2UserService;
 
     @MockBean
-    private UserRepository userRepository;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private OAuth2SuccessHandler oauth2SuccessHandler;
 
     @Test
-    @WithMockUser
-    @DisplayName("성공: 유효한 Refresh Token으로 새로운 Access Token을 발급받는다")
-    void refresh_token_success() throws Exception {
+    @DisplayName("성공: /reissue 호출 시 새로운 토큰 세트를 발급받고 쿠키에 저장한다")
+    void reissue_success() throws Exception {
         // [Given]
         String oldRefreshToken = "old-refresh-token";
-        String userEmail = "test@test.com";
-        User user = User.builder()
-                .email(userEmail)
-                .role(Role.USER)
-                .build();
-        user.updateRefreshToken(oldRefreshToken);
-
         String newAccessToken = "new-access-token";
         String newRefreshToken = "new-refresh-token";
+        TokenDto tokenDto = new TokenDto(newAccessToken, newRefreshToken);
 
-        when(jwtProvider.validateToken(oldRefreshToken)).thenReturn(true);
-        when(userRepository.findByRefreshToken(oldRefreshToken)).thenReturn(Optional.of(user));
-        when(jwtProvider.createAccessToken(userEmail, Role.USER.name())).thenReturn(newAccessToken);
-        when(jwtProvider.createRefreshToken(userEmail, Role.USER.name())).thenReturn(newRefreshToken);
+        when(authService.reissue(oldRefreshToken)).thenReturn(tokenDto);
 
         // [When & Then]
-        mockMvc.perform(post("/api/auth/refresh")
-                        .with(csrf()) // CSRF 필터 대응
+        mockMvc.perform(post("/api/auth/reissue")
+                        .with(csrf())
                         .cookie(new Cookie("refreshToken", oldRefreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(cookie().value("accessToken", newAccessToken))
                 .andExpect(cookie().value("refreshToken", newRefreshToken))
                 .andExpect(jsonPath("$.message").value("토큰이 성공적으로 갱신되었습니다."));
 
-        // RTR 검증: 새로운 리프레시 토큰이 DB에 저장되었는지 확인
-        verify(userRepository).save(any(User.class));
+        verify(authService).reissue(oldRefreshToken);
     }
 
     @Test
-    @WithMockUser
-    @DisplayName("실패: 유효하지 않은 Refresh Token으로 요청하면 401을 반환한다")
-    void refresh_token_invalid() throws Exception {
-        // [Given]
-        String invalidToken = "invalid-token";
-        when(jwtProvider.validateToken(invalidToken)).thenReturn(false);
-
+    @DisplayName("실패: /reissue 호출 시 Refresh Token이 없으면 401을 반환한다")
+    void reissue_fail_no_cookie() throws Exception {
         // [When & Then]
-        mockMvc.perform(post("/api/auth/refresh")
-                        .with(csrf())
-                        .cookie(new Cookie("refreshToken", invalidToken)))
+        mockMvc.perform(post("/api/auth/reissue")
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("유효하지 않은 Refresh Token입니다."));
+                .andExpect(jsonPath("$.message").value("Refresh Token이 존재하지 않습니다."));
     }
 
     @Test
-    @WithMockUser
-    @DisplayName("실패: DB에 존재하지 않는 토큰으로 요청하면 401을 반환한다")
-    void refresh_token_not_found_in_db() throws Exception {
+    @DisplayName("실패: 서비스 레이어에서 예외 발생 시 401을 반환한다")
+    void reissue_fail_service_exception() throws Exception {
         // [Given]
-        String validTokenButNotStored = "valid-but-not-stored";
-        when(jwtProvider.validateToken(validTokenButNotStored)).thenReturn(true);
-        when(userRepository.findByRefreshToken(validTokenButNotStored)).thenReturn(Optional.empty());
+        String refreshToken = "invalid-token";
+        when(authService.reissue(refreshToken)).thenThrow(new RuntimeException("유효하지 않은 토큰입니다."));
 
         // [When & Then]
-        mockMvc.perform(post("/api/auth/refresh")
+        mockMvc.perform(post("/api/auth/reissue")
                         .with(csrf())
-                        .cookie(new Cookie("refreshToken", validTokenButNotStored)))
+                        .cookie(new Cookie("refreshToken", refreshToken)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("해당 토큰과 일치하는 사용자가 없습니다."));
+                .andExpect(jsonPath("$.message").value("유효하지 않은 토큰입니다."));
     }
 }

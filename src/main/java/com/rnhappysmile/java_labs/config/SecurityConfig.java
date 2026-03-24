@@ -44,7 +44,7 @@ public class SecurityConfig {
             .requestMatchers(new AntPathRequestMatcher("/login")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/instances")).permitAll()
-            .requestMatchers("/", "/login", "/oauth2/**", "/error", "/h2-console/**", "/api/auth/refresh").permitAll()
+            .requestMatchers("/", "/login", "/oauth2/**", "/error", "/h2-console/**", "/api/auth/reissue").permitAll()
             .requestMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
         );
