@@ -40,13 +40,17 @@ spring:
     username: sa
     # 2. 패스워드는 보통 비워두는 것이 기본값입니다.
     password: 
+  data:
+    redis:
+      host: localhost
+      port: 6379
   jpa:
     hibernate:
       ddl-auto: create   # 서버 시작 시 테이블 자동 생성
     show-sql: true       # 콘솔에 SQL 로그 출력
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
+  secret-key: ${JWT_SECRET_KEY:c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5c2VjcmV0a2V5}
   issuer: "java-labs"
   access-token:
     expiration-time: 3600000

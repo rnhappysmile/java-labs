@@ -30,7 +30,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    private String refreshToken;
+
 
     @Builder
     public User(String name, String email, String provider, String providerId, Role role) {
@@ -41,8 +41,6 @@ public class User {
         this.role = role;
     }
 
-    public void updateRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
+
     
 }

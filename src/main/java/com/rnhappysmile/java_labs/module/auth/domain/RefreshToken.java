@@ -1,18 +1,22 @@
 package com.rnhappysmile.java_labs.module.auth.domain;
 
-import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.TimeToLive;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-@Entity
+@RedisHash("refreshToken")
+@Getter
+@AllArgsConstructor
 public class RefreshToken {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String userId;
-    private String token;
-    private LocalDateTime expiryDate;
+    private String refreshToken;
+
+    private String email;
+
+    @TimeToLive
+    private Long expiration;
 }

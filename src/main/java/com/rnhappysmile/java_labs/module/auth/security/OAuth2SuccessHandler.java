@@ -1,13 +1,15 @@
 package com.rnhappysmile.java_labs.module.auth.security;
 
+import com.rnhappysmile.java_labs.module.auth.domain.RefreshToken;
 import com.rnhappysmile.java_labs.module.auth.domain.User;
 import com.rnhappysmile.java_labs.module.auth.dto.PrincipalDetails;
-import com.rnhappysmile.java_labs.module.auth.repository.UserRepository;
+import com.rnhappysmile.java_labs.module.auth.repository.RefreshTokenRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -21,7 +23,10 @@ import java.io.IOException;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
-    private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    @Value("${jwt.refresh-token.expiration-time}")
+    private long refreshTokenExpirationTime;
 
     @Override
     @Transactional
@@ -36,15 +41,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
         String refreshToken = jwtProvider.createRefreshToken(user.getEmail(), user.getRole().name());
 
-        // 2. Refresh Token DB 업데이트
-        userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
-            u.updateRefreshToken(refreshToken);
-            userRepository.save(u);
-        });
+        // 2. Refresh Token Redis 저장
+        refreshTokenRepository.save(new RefreshToken(refreshToken, user.getEmail(), refreshTokenExpirationTime / 1000));
 
         // 3. 응답 헤더/쿠키 설정
         addTokenToCookie(response, "accessToken", accessToken, 3600); // 1시간
-        addTokenToCookie(response, "refreshToken", refreshToken, 1209600); // 14일 (HttpOnly)
+        addTokenToCookie(response, "refreshToken", refreshToken, (int) (refreshTokenExpirationTime / 1000)); // 14일 (HttpOnly)
 
         log.info("OAuth2 로그인 성공: {}, Access Token 및 Refresh Token 발급 완료", user.getEmail());
 

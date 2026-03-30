@@ -8,6 +8,7 @@ java-labs.zip
 application-local.yaml
 LEARNING_GUIDE.md
 Devlog/
+*.log
 
 ### STS ###
 .apt_generated
