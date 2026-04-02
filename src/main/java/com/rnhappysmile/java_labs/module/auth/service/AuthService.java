@@ -1,5 +1,7 @@
 package com.rnhappysmile.java_labs.module.auth.service;
 
+import com.rnhappysmile.java_labs.common.error.ErrorCode;
+import com.rnhappysmile.java_labs.common.error.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,16 +30,16 @@ public class AuthService {
     public TokenDto reissue(String refreshToken) {
         // 1. Refresh Token 자체의 유효성 검증
         if (!jwtProvider.validateToken(refreshToken)) {
-            throw new RuntimeException("유효하지 않거나 만료된 Refresh Token입니다.");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
 
         // 2. Redis에서 Refresh Token 조회
         RefreshToken storedToken = refreshTokenRepository.findById(refreshToken)
-                .orElseThrow(() -> new RuntimeException("해당 토큰으로 사용자를 찾을 수 없습니다. (이미 사용되었거나 잘못된 토큰)"));
+                .orElseThrow(() -> new BusinessException("해당 토큰으로 사용자를 찾을 수 없습니다. (이미 사용되었거나 잘못된 토큰)", ErrorCode.INVALID_TOKEN));
 
         // 3. DB에서 사용자 조회 (Roles 갱신 등을 위해)
         User user = userRepository.findByEmail(storedToken.getEmail())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 새로운 토큰 세트 생성
         String newAccessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());

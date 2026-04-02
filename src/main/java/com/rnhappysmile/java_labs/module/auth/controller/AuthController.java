@@ -1,5 +1,7 @@
 package com.rnhappysmile.java_labs.module.auth.controller;
 
+import com.rnhappysmile.java_labs.common.error.ErrorCode;
+import com.rnhappysmile.java_labs.common.error.exception.BusinessException;
 import com.rnhappysmile.java_labs.module.auth.dto.TokenDto;
 import com.rnhappysmile.java_labs.module.auth.service.AuthService;
 import jakarta.servlet.http.Cookie;
@@ -38,23 +40,18 @@ public class AuthController {
         // 1. 쿠키에서 Refresh Token 추출
         String refreshToken = getRefreshTokenFromCookie(request);
         if (refreshToken == null) {
-            return ResponseEntity.status(401).body(Map.of("message", "Refresh Token이 존재하지 않습니다."));
+            throw new BusinessException(ErrorCode.TOKEN_NOT_FOUND);
         }
 
-        try {
-            // 2. 서비스 로직 호출 (RTR 수행 및 토큰 세트 변환)
-            TokenDto tokenDto = authService.reissue(refreshToken);
+        // 2. 서비스 로직 호출 (RTR 수행 및 토큰 세트 변환)
+        TokenDto tokenDto = authService.reissue(refreshToken);
 
-            // 3. 응답 쿠키 설정 (보안 강화: HttpOnly, Secure 등)
-            addTokenToCookie(response, "accessToken", tokenDto.getNewAccessToken(), 3600, false);
-            addTokenToCookie(response, "refreshToken", tokenDto.getNewRefreshToken(), 1209600, true);
+        // 3. 응답 쿠키 설정 (보안 강화: HttpOnly, Secure 등)
+        addTokenToCookie(response, "accessToken", tokenDto.getNewAccessToken(), 3600, false);
+        addTokenToCookie(response, "refreshToken", tokenDto.getNewRefreshToken(), 1209600, true);
 
-            log.info("토큰 재발급 및 로테이션 성공");
-            return ResponseEntity.ok(Map.of("message", "토큰이 성공적으로 갱신되었습니다."));
-        } catch (RuntimeException e) {
-            log.error("토큰 재발급 실패: {}", e.getMessage());
-            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
-        }
+        log.info("토큰 재발급 및 로테이션 성공");
+        return ResponseEntity.ok(Map.of("message", "토큰이 성공적으로 갱신되었습니다."));
     }
 
     private String getRefreshTokenFromCookie(HttpServletRequest request) {
