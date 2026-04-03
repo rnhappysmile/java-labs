@@ -1,5 +1,7 @@
 package com.rnhappysmile.java_labs.module.auth.controller;
 
+import com.rnhappysmile.java_labs.common.error.ErrorCode;
+import com.rnhappysmile.java_labs.common.error.exception.BusinessException;
 import com.rnhappysmile.java_labs.module.auth.dto.TokenDto;
 import com.rnhappysmile.java_labs.module.auth.security.JwtAuthenticationFilter;
 import com.rnhappysmile.java_labs.module.auth.security.OAuth2SuccessHandler;
@@ -69,21 +71,42 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/reissue")
                         .with(csrf()))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Refresh Token이 존재하지 않습니다."));
+                .andExpect(jsonPath("$.message").value("토큰을 찾을 수 없습니다."));
     }
 
     @Test
-    @DisplayName("실패: 서비스 레이어에서 예외 발생 시 401을 반환한다")
+    @DisplayName("실패: 서비스 레이어에서 예외 발생 시 해당 에러 상태를 반환한다")
     void reissue_fail_service_exception() throws Exception {
         // [Given]
         String refreshToken = "invalid-token";
-        when(authService.reissue(refreshToken)).thenThrow(new RuntimeException("유효하지 않은 토큰입니다."));
+        when(authService.reissue(refreshToken)).thenThrow(new BusinessException(ErrorCode.INVALID_TOKEN));
 
         // [When & Then]
         mockMvc.perform(post("/api/auth/reissue")
                         .with(csrf())
                         .cookie(new Cookie("refreshToken", refreshToken)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("유효하지 않은 토큰입니다."));
+                .andExpect(jsonPath("$.code").value("A002"));
+    }
+
+    @Test
+    @DisplayName("성공: /logout 호출 시 쿠키가 만료되고 200을 반환한다")
+    void logout_success() throws Exception {
+        // [Given]
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+
+        // [When & Then]
+        mockMvc.perform(post("/api/auth/logout")
+                        .with(csrf())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("accessToken", accessToken))
+                        .cookie(new Cookie("refreshToken", refreshToken)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("accessToken", 0))
+                .andExpect(cookie().maxAge("refreshToken", 0))
+                .andExpect(jsonPath("$.message").value("성공적으로 로그아웃되었습니다."));
+
+        verify(authService).logout(accessToken, refreshToken);
     }
 }

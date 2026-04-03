@@ -14,6 +14,9 @@ import com.rnhappysmile.java_labs.module.auth.repository.UserRepository;
 import com.rnhappysmile.java_labs.module.auth.security.JwtProvider;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +26,28 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${jwt.refresh-token.expiration-time}")
     private long refreshTokenExpirationTime;
+
+    public void logout(String accessToken, String refreshToken) {
+        // 1. Access Token 유효성 검증 (이미 필터에서 검증되었겠지만 한 번 더 체크 가능)
+        if (!jwtProvider.validateToken(accessToken)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 2. Access Token의 남은 유효 시간을 계산하여 Blacklist에 등록
+        Long expiration = jwtProvider.getExpiration(accessToken);
+        redisTemplate.opsForValue()
+                .set("blacklist:" + accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+
+        // 3. Redis에서 Refresh Token 삭제
+        if (refreshToken != null) {
+            refreshTokenRepository.findById(refreshToken)
+                    .ifPresent(refreshTokenRepository::delete);
+        }
+    }
 
     public TokenDto reissue(String refreshToken) {
         // 1. Refresh Token 자체의 유효성 검증

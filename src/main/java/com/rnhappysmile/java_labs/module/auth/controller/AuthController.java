@@ -54,6 +54,52 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "토큰이 성공적으로 갱신되었습니다."));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        // 1. 요청에서 Access Token 추출
+        String accessToken = resolveToken(request);
+        
+        // 2. 쿠키에서 Refresh Token 추출
+        String refreshToken = getRefreshTokenFromCookie(request);
+
+        // 3. 서비스 로직 호출 (Blacklist 등록 및 Refresh Token 삭제)
+        if (accessToken != null) {
+            authService.logout(accessToken, refreshToken);
+        }
+
+        // 4. 쿠키 무효화
+        expireCookie(response, "accessToken");
+        expireCookie(response, "refreshToken");
+
+        log.info("로그아웃 성공");
+        return ResponseEntity.ok(Map.of("message", "성공적으로 로그아웃되었습니다."));
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+
+        // 쿠키에서도 확인 (기존 reissue 로직 참고)
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("accessToken")) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    private void expireCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+
     private String getRefreshTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {

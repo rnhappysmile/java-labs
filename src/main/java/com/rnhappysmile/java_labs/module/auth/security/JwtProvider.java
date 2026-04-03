@@ -115,6 +115,12 @@ public class JwtProvider {
                 .getPayload();
     }
 
+    public Long getExpiration(String token) {
+        Date expiration = getClaims(token).getExpiration();
+        long now = new Date().getTime();
+        return (expiration.getTime() - now);
+    }
+
     // 기존 validateToken 외에 만료된 토큰에서도 Claims를 가져오는 메서드 (재발급 시 필요할 수 있음)
     public Claims getClaimsIgnoreExpiration(String token) {
         try {

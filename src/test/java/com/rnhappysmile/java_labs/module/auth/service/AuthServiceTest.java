@@ -3,12 +3,15 @@ package com.rnhappysmile.java_labs.module.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.rnhappysmile.java_labs.common.error.ErrorCode;
+import com.rnhappysmile.java_labs.common.error.exception.BusinessException;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.rnhappysmile.java_labs.module.auth.domain.RefreshToken;
@@ -38,12 +43,44 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
+
     @InjectMocks
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(authService, "refreshTokenExpirationTime", 1209600000L);
+    }
+
+    @Test
+    @DisplayName("성공: 로그아웃 시 Access Token은 블랙리스트에 등록되고 Refresh Token은 삭제된다")
+    void logout_success() {
+        // given
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+        Long expiration = 3600L;
+
+        RefreshToken storedToken = new RefreshToken(refreshToken, "test@example.com", 1000L);
+
+        when(jwtProvider.validateToken(accessToken)).thenReturn(true);
+        when(jwtProvider.getExpiration(accessToken)).thenReturn(expiration);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(refreshTokenRepository.findById(refreshToken)).thenReturn(Optional.of(storedToken));
+
+        // when
+        authService.logout(accessToken, refreshToken);
+
+        // then
+        verify(jwtProvider).validateToken(accessToken);
+        verify(jwtProvider).getExpiration(accessToken);
+        verify(valueOperations).set(eq("blacklist:" + accessToken), eq("logout"), eq(expiration), any());
+        verify(refreshTokenRepository).findById(refreshToken);
+        verify(refreshTokenRepository).delete(storedToken);
     }
 
     @Test
@@ -91,8 +128,7 @@ class AuthServiceTest {
 
         // when & then
         assertThatThrownBy(() -> authService.reissue(invalidToken))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("유효하지 않거나 만료된 Refresh Token입니다.");
+                .isInstanceOf(BusinessException.class);
 
         verify(jwtProvider).validateToken(invalidToken);
         verify(refreshTokenRepository, never()).findById(any());
