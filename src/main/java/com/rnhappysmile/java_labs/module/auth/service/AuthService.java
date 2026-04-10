@@ -1,5 +1,6 @@
 package com.rnhappysmile.java_labs.module.auth.service;
 
+import com.rnhappysmile.java_labs.common.aop.DistributedLock;
 import com.rnhappysmile.java_labs.common.error.ErrorCode;
 import com.rnhappysmile.java_labs.common.error.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AuthService {
     
     private final JwtProvider jwtProvider;
@@ -34,6 +34,7 @@ public class AuthService {
     @Value("${jwt.refresh-token.grace-period-seconds:10}")
     private long refreshTokenGracePeriodSeconds;
 
+    @Transactional
     public void logout(String accessToken, String refreshToken) {
         // 1. Access Token 유효성 검증 (이미 필터에서 검증되었겠지만 한 번 더 체크 가능)
         if (!jwtProvider.validateToken(accessToken)) {
@@ -52,6 +53,7 @@ public class AuthService {
         }
     }
 
+    @DistributedLock(key = "#refreshToken")
     public TokenDto reissue(String refreshToken) {
         // 1. Refresh Token 자체의 유효성 검증
         if (!jwtProvider.validateToken(refreshToken)) {
