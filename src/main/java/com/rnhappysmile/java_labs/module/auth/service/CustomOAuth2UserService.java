@@ -5,22 +5,27 @@ import com.rnhappysmile.java_labs.module.auth.OAuth2UserInfoFactory;
 import com.rnhappysmile.java_labs.module.auth.domain.Role;
 import com.rnhappysmile.java_labs.module.auth.domain.User;
 import com.rnhappysmile.java_labs.module.auth.dto.PrincipalDetails;
+import com.rnhappysmile.java_labs.module.auth.event.UserRegisteredEvent;
 import com.rnhappysmile.java_labs.module.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
+    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
         return processOAuth2User(userRequest, oAuth2User);
@@ -43,13 +48,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     // 필요 시 이름이나 이메일 업데이트 로직 추가
                     return entity;
                 })
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .name(userInfo.getName())
-                        .email(userInfo.getEmail())
-                        .provider(userInfo.getProvider())
-                        .providerId(userInfo.getProviderId())
-                        .role(Role.USER)
-                        .build()));
+                .orElseGet(() -> {
+                    User newUser = userRepository.save(User.builder()
+                            .name(userInfo.getName())
+                            .email(userInfo.getEmail())
+                            .provider(userInfo.getProvider())
+                            .providerId(userInfo.getProviderId())
+                            .role(Role.USER)
+                            .build());
+                    
+                    eventPublisher.publishEvent(new UserRegisteredEvent(newUser.getEmail(), newUser.getName()));
+                    return newUser;
+                });
     }
-    
 }
