@@ -84,3 +84,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+outbox:
+  email:
+    max-retry: 5
