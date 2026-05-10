@@ -59,4 +59,13 @@ public class EmailOutboxService {
             }
         });
     }
+
+    @Transactional
+    public void retry(Long id) {
+        EmailOutbox outbox = emailOutboxRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Outbox not found: " + id));
+        
+        outbox.manualRetry();
+        log.info("Manually triggered retry for email outbox id: {}", id);
+    }
 }

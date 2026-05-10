@@ -79,4 +79,10 @@ public class EmailOutbox {
         this.status = OutboxStatus.FAILED;
         this.lastError = errorMessage;
     }
+
+    public void manualRetry() {
+        this.status = OutboxStatus.PENDING;
+        this.retryCount = 0;
+        this.lastError = null;
+    }
 }
