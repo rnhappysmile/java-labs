@@ -4,13 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rnhappysmile.java_labs.module.auth.domain.EmailOutbox;
 import com.rnhappysmile.java_labs.module.auth.domain.OutboxStatus;
+import com.rnhappysmile.java_labs.module.auth.dto.EmailOutboxResponse;
 import com.rnhappysmile.java_labs.module.auth.repository.EmailOutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -20,6 +24,26 @@ public class EmailOutboxService {
 
     private final EmailOutboxRepository emailOutboxRepository;
     private final ObjectMapper objectMapper;
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getStatistics() {
+        Map<String, Long> stats = new HashMap<>();
+        for (OutboxStatus status : OutboxStatus.values()) {
+            stats.put(status.name(), emailOutboxRepository.countByStatus(status));
+        }
+        stats.put("TOTAL", emailOutboxRepository.count());
+        return stats;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EmailOutboxResponse> getOutboxes(OutboxStatus status, Pageable pageable) {
+        if (status != null) {
+            return emailOutboxRepository.findByStatus(status, pageable)
+                    .map(EmailOutboxResponse::from);
+        }
+        return emailOutboxRepository.findAll(pageable)
+                .map(EmailOutboxResponse::from);
+    }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveOutbox(String recipient, String templateName, Map<String, Object> payload) {

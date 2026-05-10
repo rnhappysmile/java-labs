@@ -14,6 +14,10 @@ import java.util.List;
 public interface EmailOutboxRepository extends JpaRepository<EmailOutbox, Long> {
     List<EmailOutbox> findByStatusOrderByCreatedAtAsc(OutboxStatus status, Pageable pageable);
 
+    org.springframework.data.domain.Page<EmailOutbox> findByStatus(OutboxStatus status, org.springframework.data.domain.Pageable pageable);
+
+    long countByStatus(OutboxStatus status);
+
     @Modifying
     @Query("UPDATE EmailOutbox e SET e.status = :toStatus, e.updatedAt = CURRENT_TIMESTAMP " +
            "WHERE e.id = :id AND e.status = :fromStatus")
